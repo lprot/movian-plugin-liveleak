@@ -53,7 +53,7 @@
     plugin.addURI(plugin.getDescriptor().id + ":play:(.*):(.*)", function(page, url, title) {
         page.loading = true;
         var doc = showtime.httpReq(unescape(url)).toString();
-        //console.log(unescape(url));
+        var title = showtime.entityDecode(unescape(title));
         var match = doc.match(/config: "([\S\s]*?)"/g);
         if (!match) { // internal
              match = doc.match(/<iframe[\S\s]*?src="([\S\s]*?)"/);
@@ -64,7 +64,7 @@
              lnk = doc.match(/<source src="([\S\s]*?)"/)[1];
              page.type = "video";
              page.source = "videoparams:" + showtime.JSONEncode({
-                 title: unescape(title),
+                 title: title,
                  no_fs_scan: true,
                  canonicalUrl: plugin.getDescriptor().id + ':play:' + url + ':' + title,
                  sources: [{
@@ -80,7 +80,7 @@
             else
                 lnk = match[0].match(/file_url=([\S\s]*?)&/)[1];
             page.source = "videoparams:" + showtime.JSONEncode({
-                title: unescape(title),
+                title: title,
                 no_fs_scan: true,
                 canonicalUrl: plugin.getDescriptor().id + ':play:' + url + ':' + title,
                 sources: [{
@@ -98,7 +98,7 @@
                     lnk = match[i].match(/file_url=([\S\s]*?)&/)[1];
 
                 var link = "videoparams:" + showtime.JSONEncode({
-                    title: unescape(title) + '_part' + (i + 1),
+                    title: title + '_part' + (i + 1),
                     no_fs_scan: true,
                     canonicalUrl: plugin.getDescriptor().id + ':' + url + ':' + title + '_part' + (i + 1),
                     sources: [{
@@ -107,7 +107,7 @@
                     no_subtitle_scan: true
                 });
                 page.appendItem(link, "video", {
-                    title: unescape(title) + '_part' + (i + 1),
+                    title: title + '_part' + (i + 1),
                     icon: unescape(match[i].match(/preview_image_url=([\S\s]*?)&/)[1])
                 });
             }
