@@ -21,14 +21,21 @@ var page = require('showtime/page');
 var service = require('showtime/service');
 var settings = require('showtime/settings');
 var http = require('showtime/http');
-
+var string = require('native/string');
 var plugin = JSON.parse(Plugin.manifest);
 var logo = Plugin.path + plugin.icon;
+
+RichText = function(x) {
+    this.str = x.toString();
+}
+
+RichText.prototype.toRichString = function(x) {
+    return this.str;
+}
 
 var BASE_URL = 'http://www.liveleak.com';
 
 var blue = '6699CC', orange = 'FFA500', red = 'EE0000', green = '008B45';
-
 function coloredStr(str, color) {
     return '<font color="' + color + '">' + str + '</font>';
 }
@@ -53,7 +60,7 @@ service.create(plugin.title, plugin.id + ":start", 'video', true, logo);
 new page.Route(plugin.id + ":play:(.*):(.*)", function(page, url, title) {
     page.loading = true;
     var doc = http.request(unescape(url)).toString();
-    var title = showtime.entityDecode(unescape(title));
+    var title = string.entityDecode(unescape(title));
     var match = doc.match(/config: "([\S\s]*?)"/g);
     if (!match) { // internal
          match = doc.match(/<iframe[\S\s]*?src="([\S\s]*?)"/);
@@ -63,7 +70,7 @@ new page.Route(plugin.id + ":play:(.*):(.*)", function(page, url, title) {
          doc = http.request(match[1]).toString();
          lnk = doc.match(/<source src="([\S\s]*?)"/)[1];
          page.type = "video";
-         page.source = "videoparams:" + showtime.JSONEncode({
+         page.source = "videoparams:" + JSON.stringify({
              title: title,
              no_fs_scan: true,
              canonicalUrl: plugin.id + ':play:' + url + ':' + title,
@@ -79,7 +86,7 @@ new page.Route(plugin.id + ":play:(.*):(.*)", function(page, url, title) {
             lnk = lnk[1]
         else
             lnk = match[0].match(/file_url=([\S\s]*?)&/)[1];
-        page.source = "videoparams:" + showtime.JSONEncode({
+        page.source = "videoparams:" + JSON.stringify({
             title: title,
             no_fs_scan: true,
             canonicalUrl: plugin.id + ':play:' + url + ':' + title,
@@ -97,7 +104,7 @@ new page.Route(plugin.id + ":play:(.*):(.*)", function(page, url, title) {
             else
                 lnk = match[i].match(/file_url=([\S\s]*?)&/)[1];
 
-            var link = "videoparams:" + showtime.JSONEncode({
+            var link = "videoparams:" + JSON.stringify({
                 title: title + '_part' + (i + 1),
                 no_fs_scan: true,
                 canonicalUrl: plugin.id + ':' + url + ':' + title + '_part' + (i + 1),
@@ -129,10 +136,10 @@ function scrape_videos(page, url) {
         var match = re.exec(doc);
         while (match) {
             page.appendItem(plugin.id + ":play:" + escape(match[1]) + ':' + escape(match[3]), "video", {
-                title: new showtime.RichText(match[5].match(/hd_video_icon/) ? coloredStr('HD ', orange) + showtime.entityDecode(match[3]) : showtime.entityDecode(match[3])),
+                title: new RichText(match[5].match(/hd_video_icon/) ? coloredStr('HD ', orange) + string.entityDecode(match[3]) : string.entityDecode(match[3])),
                 icon: match[2],
                 genre: match[4],
-                description: new showtime.RichText(coloredStr('Description: ', orange) + trim(match[6]) + '\n' + trim(match[7]))
+                description: new RichText(coloredStr('Description: ', orange) + trim(match[6]) + '\n' + trim(match[7]))
             });
             match = re.exec(doc);
             page.entries++;
@@ -161,10 +168,10 @@ new page.Route(plugin.id + ":scrapeChannel:(.*):(.*)", function(page, url, title
         if (!match) return tryToSearch = false;
         while (match) {
             page.appendItem(plugin.id + ":play:" + escape(match[1]) + ':' + escape(match[3]), "video", {
-                title: new showtime.RichText(match[5].match(/hd_video_icon/) ? coloredStr('HD ', orange) + match[3] : match[3]),
+                title: new RichText(match[5].match(/hd_video_icon/) ? coloredStr('HD ', orange) + match[3] : match[3]),
                 icon: match[2],
                 genre: match[4],
-                description: new showtime.RichText(coloredStr('Description: ', orange) + trim(match[6]) + '\n' + trim(match[7]))
+                description: new RichText(coloredStr('Description: ', orange) + trim(match[6]) + '\n' + trim(match[7]))
             });
             match = re.exec(doc);
             page.entries++;
@@ -194,7 +201,7 @@ function scrape_channels(page, url) {
             page.appendItem(plugin.id + ":scrapeChannel:" + escape(match[1]) + ':' + escape(match[2]), "video", {
                 title: match[2],
                 icon: match[3],
-                description: new showtime.RichText(coloredStr('Description: ', orange) + trim(match[4]) + '\n' + trim(match[5]))
+                description: new RichText(coloredStr('Description: ', orange) + trim(match[4]) + '\n' + trim(match[5]))
             });
             match = re.exec(doc);
             page.entries++;
@@ -251,9 +258,9 @@ page.Searcher(plugin.id, logo, function(page, query) {
         var match = re.exec(doc);
         while (match) {
             page.appendItem(plugin.id + ":scrapeChannel:" + escape(match[1]) + ':' + escape(match[3]), "video", {
-                title: new showtime.RichText(match[4].match(/hd_video_icon/) ? coloredStr('HD ', orange) + match[3] : match[3]),
+                title: new RichText(match[4].match(/hd_video_icon/) ? coloredStr('HD ', orange) + match[3] : match[3]),
                 icon: match[2],
-                description: new showtime.RichText(coloredStr('Description: ', orange) + trim(match[5]) + '\n' + trim(match[6]))
+                description: new RichText(coloredStr('Description: ', orange) + trim(match[5]) + '\n' + trim(match[6]))
             });
             match = re.exec(doc);
             page.entries++;
